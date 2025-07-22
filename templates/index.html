@@ -33,7 +33,7 @@
   <div id="result">{{ result.result }}</div>
   <button onclick="runScript()">Run Python Code</button>
   <p>Total Amount: <span id="total">0</span></p>
-  
+
   <h2>Invoice List</h2>
   <table id="invoiceTable">
     <thead>
@@ -77,23 +77,21 @@
 
     function runScript() {
       fetch('/run', { method: 'POST' })
-        .then(res => res.json())
+        .then(res => res.json())  // ✅ Proper fetch response parsing
         .then(data => {
-          document.getElementById('result').innerText = data.result || "Updated.";
+          document.getElementById('result').innerText = "Updated.";
           renderTable(data.content);
-        })
-        .catch(error => {
-          console.error("Error:", error);
-          alert("Failed to run script.");
+          document.getElementById('total').innerText = data.total;
         });
     }
 
     function postToken(token) {
-     window.open('/token_page?q=' + encodeURIComponent(token), '_blank');
+      window.open('/token_page?q=' + encodeURIComponent(token), '_blank');
     }
 
     // Render table on page load
     renderTable(data.content);
   </script>
 </body>
+
 </html>
