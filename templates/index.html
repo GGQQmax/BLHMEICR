@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Invoice Table</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+
+    th {
+      background: #eee;
+    }
+
+    a {
+      cursor: pointer;
+      color: blue;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Last Result:</h1>
+  <div id="result">{{ result.result }}</div>
+  <button onclick="runScript()">Run Python Code</button>
+  <p>Total Amount: <span id="total">0</span></p>
+  
+  <h2>Invoice List</h2>
+  <table id="invoiceTable">
+    <thead>
+      <tr>
+        <th>Invoice Number</th>
+        <th>Date</th>
+        <th>Carrier</th>
+        <th>Seller</th>
+        <th>Amount</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // Inject JSON result from Flask
+    const data = {{ result | tojson | safe }};
+
+    function renderTable(content) {
+      const tbody = document.querySelector('#invoiceTable tbody');
+      tbody.innerHTML = "";
+
+      if (content && Array.isArray(content)) {
+        content.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.invoiceNumber}</td>
+            <td>${new Date(item.invoiceDate).toLocaleDateString()}</td>
+            <td>${item.carrierName}</td>
+            <td>${item.sellerName}</td>
+            <td>${item.totalAmount}</td>
+            <td><a onclick="postToken('${item.token}')">View Details</a></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        tbody.innerHTML = "<tr><td colspan='6'>No data</td></tr>";
+      }
+    }
+
+    function runScript() {
+      fetch('/run', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('result').innerText = data.result || "Updated.";
+          renderTable(data.content);
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          alert("Failed to run script.");
+        });
+    }
+
+    function postToken(token) {
+     window.open('/token_page?q=' + encodeURIComponent(token), '_blank');
+    }
+
+    // Render table on page load
+    renderTable(data.content);
+  </script>
+</body>
+</html>
