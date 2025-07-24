@@ -75,6 +75,10 @@
       }
     }
 
+    function renderTotal(total) {
+      document.getElementById('total').innerText = total || 0;
+    }
+
     function runScript() {
       fetch('/run', { method: 'POST' })
         .then(res => res.json())  // ✅ Proper fetch response parsing
@@ -91,6 +95,7 @@
 
     // Render table on page load
     renderTable(data.content);
+    renderTotal(data.total);
   </script>
 </body>
 
