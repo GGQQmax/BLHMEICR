@@ -115,13 +115,19 @@ class EInvoiceAuthenticator:
 
     def getSearchCarrierInvoiceListJWT(self, searchStartDate:datetime, searchEndDate:datetime, max_retries:int=2) -> str: #returns JWT token
         url = "https://service-mc.einvoice.nat.gov.tw/btc/cloud/api/btc502w/getSearchCarrierInvoiceListJWT"
+        print("Try to Searching. Start at"+searchStartDate.isoformat()+" end at"+searchStartDate.isoformat())
+
+        searchStartDate = searchStartDate.replace(hour=15, minute=5, second=23, microsecond=222000) #if not the api may fail
+        searchEndDate = searchEndDate.replace(hour=15, minute=5, second=23, microsecond=222000)
+        
         if self.session is None:
             self.getAuthRequestsSession()
+
         data = {
             "cardCode": "",
             "carrierId2": "",
-            "searchStartDate": searchStartDate.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
             "searchEndDate": searchEndDate.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
+            "searchStartDate": searchStartDate.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
             "invoiceStatus": "all",
             "isSearchAll": "true"
         }
