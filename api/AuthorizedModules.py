@@ -71,7 +71,7 @@ class EInvoiceAuthenticator:
             captcha_element.screenshot("dataCaptcha.png")
 
             # Read captcha using EasyOCR
-            reader = easyocr.Reader(['en'])
+            reader = easyocr.Reader(['en'], gpu=False)
             result = reader.readtext("dataCaptcha.png", allowlist='0123456789')
 
             # Print OCR results for verification
