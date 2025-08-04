@@ -4,28 +4,62 @@
 <head>
   <title>Invoice Table</title>
   <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-    }
+  body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: sans-serif;
+    margin: 20px;
+  }
 
-    th,
-    td {
-      border: 1px solid #ccc;
-      padding: 8px;
-    }
+  h1, h2 {
+    color: #ffffff;
+  }
 
-    th {
-      background: #eee;
-    }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+  }
 
-    a {
-      cursor: pointer;
-      color: blue;
-      text-decoration: underline;
-    }
-  </style>
+  th, td {
+    border: 1px solid #444;
+    padding: 10px;
+  }
+
+  th {
+    background-color: #333;
+    color: #ffffff;
+  }
+
+  a {
+    cursor: pointer;
+    color: #64b5f6;
+    text-decoration: underline;
+  }
+
+  a:hover {
+    color: #90caf9;
+  }
+
+  button {
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  button:hover {
+    background-color: #444;
+  }
+
+  #result {
+    margin-bottom: 20px;
+  }
+</style>
 </head>
 
 <body>
@@ -80,6 +114,7 @@
     }
 
     function runScript() {
+      document.getElementById('result').innerText = "Runing.";
       fetch('/run', { method: 'POST' })
         .then(res => res.json())  // ✅ Proper fetch response parsing
         .then(data => {
