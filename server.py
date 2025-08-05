@@ -15,7 +15,8 @@ api = EInvoiceAuthenticator(
             os.getenv("EINVOICE_PASSWORD")
         )
 
-RESULT_FILE = 'result.json'
+today = datetime.today()
+RESULT_FILE = f"{today.strftime('%Y_%m')}_result.json"
 
 def save_result(data):
     with open(RESULT_FILE, 'w') as f:
