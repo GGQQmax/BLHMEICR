@@ -40,9 +40,7 @@ class EInvoiceAuthenticator:
         options = Options()
         options.add_argument('--headless')  # Run in headless mode
         options.add_argument('--window-size=1280,1024') # The Button is diffrent from moble page!
-        options.add_argument(
-        "user-agent={ua}"
-        )
+        options.add_argument("user-agent={self.ua}")
         options.add_argument("--disable-blink-features=AutomationControlled")
         driver = driver = webdriver.Chrome(options=options) #uc.Chrome() you may need it in some env
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
@@ -97,10 +95,15 @@ class EInvoiceAuthenticator:
             else:
                 driver.find_element(By.CSS_SELECTOR, ".btn.btn-outline-secondary.icon").click()
 
-            # Wait to observe result before closing
-        token = driver.execute_script("return sessionStorage.getItem('saveToken');")
+        # Wait to observe result before closing
+        token = None
+        while token == None: #in some case the driver will close before it even get the token.
+            token = driver.execute_script("return sessionStorage.getItem('saveToken');")
+            time.sleep(2)
+
         selenium_cookies = driver.get_cookies()
         driver.quit()
+
         return selenium_cookies, token
 
     def getCarrierList(self, max_retries:int=2) -> dict:
