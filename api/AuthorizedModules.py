@@ -8,7 +8,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from fake_useragent import UserAgent
 
 class EInvoiceAuthenticator:
     def __init__(self, user:str, password:str):
@@ -16,7 +15,6 @@ class EInvoiceAuthenticator:
         self.__password = password
         self.authToken = None
         self.session = None
-        self.ua = UserAgent().random
         pass
 
     def getAuthRequestsSession(self) -> requests.Session:
@@ -26,8 +24,7 @@ class EInvoiceAuthenticator:
         session.cookies.update(requests_cookies)
         headers = {
                 'Authorization': f'Bearer {token}',
-                'Content-Type': 'application/json',
-                'User-Agent': self.ua,
+                'Content-Type': 'application/json' 
         }
         session.headers = headers
         self.authToken = token
@@ -36,12 +33,12 @@ class EInvoiceAuthenticator:
 
     def pesAuth(self):
         # Setup Chrome driver
-
         options = Options()
-        #options.add_argument('--headless')  # Run in headless mode
+        options.add_argument('--headless')  # Run in headless mode
         options.add_argument('--window-size=1280,1024') # The Button is diffrent from moble page!
         options.add_argument(
-        "user-agent={ua}"
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
         )
         options.add_argument("--disable-blink-features=AutomationControlled")
         driver = driver = webdriver.Chrome(options=options) #uc.Chrome() you may need it in some env
