@@ -38,7 +38,7 @@ class EInvoiceAuthenticator:
         # Setup Chrome driver
 
         options = Options()
-        #options.add_argument('--headless')  # Run in headless mode
+        options.add_argument('--headless')  # Run in headless mode
         options.add_argument('--window-size=1280,1024') # The Button is diffrent from moble page!
         options.add_argument(
         "user-agent={ua}"
