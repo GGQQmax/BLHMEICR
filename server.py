@@ -5,7 +5,7 @@ import random
 from api.AuthorizedModules import EInvoiceAuthenticator
 import os
 import dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -17,11 +17,12 @@ api = EInvoiceAuthenticator(
 
 today = datetime.today()
 RESULT_FILE = f"save_result/{today.strftime('%Y_%m')}_result.json"
+PREVIOUS_RESULT_FILE = f"save_result/{(today.replace(day=1) - timedelta(days=1)).strftime('%Y_%m')}_result.json"
 
 os.makedirs("save_result", exist_ok=True)
 
-def save_result(data):
-    with open(RESULT_FILE, 'w') as f:
+def save_result(data, filename=RESULT_FILE):
+    with open(filename, 'w') as f:
         json.dump(data, f)
 
 def load_result():
@@ -31,6 +32,27 @@ def load_result():
     except FileNotFoundError:
         return {"result": "No result yet."}
 
+def get_data(frist_day, last_day):
+    token = api.getSearchCarrierInvoiceListJWT(frist_day, last_day)
+    if not token:
+        return None
+
+    all_items = []
+    page = 0
+    while True:
+        data = api.searchCarrierInvoice(token, page=page, size=100)  # You must support page param in the API
+        if 'content' not in data:
+            break
+        all_items.extend(data['content'])
+
+        if data.get('last', True):  # When it's the last page
+            break
+        page += 1
+
+    total = sum(int(item['totalAmount']) for item in all_items)
+    return {"content": all_items, "total": total}
+
+
 @app.route('/')
 def index():
     return render_template('index.html', result=load_result())
@@ -39,6 +61,8 @@ def index():
 def run_script():
     today = datetime.today()
     first_day_of_month = today.replace(day=1)
+    first_day_of_last_month= (first_day_of_month - timedelta(days=1)).replace(day=1)
+    """
     token = api.getSearchCarrierInvoiceListJWT(first_day_of_month, today)
     if not token:
         return jsonify({"error": "Failed to retrieve token."}), 500
@@ -58,7 +82,22 @@ def run_script():
         page += 1
 
     total = sum(int(item['totalAmount']) for item in all_items)
+    """
+    result = get_data(first_day_of_month, today)
+    if not result:
+        return jsonify({"error": "Failed to retrieve data."}), 500
+    all_items = result['content']
+    total = result['total']
     save_result({"content": all_items, "total": total})
+
+    # Also get last month's data
+    result_last_month = get_data(first_day_of_last_month, first_day_of_month - timedelta(days=1))
+    if result_last_month:
+        all_items_last_month = result_last_month['content']
+        total_last_month = result_last_month['total']
+        print( "Last month's total:", total_last_month)
+        save_result({"content": all_items_last_month, "total": total_last_month}, filename=PREVIOUS_RESULT_FILE)       
+
 
     return jsonify({
         "content": all_items,
