@@ -21,7 +21,7 @@ PREVIOUS_RESULT_FILE = f"save_result/{(today.replace(day=1) - timedelta(days=1))
 
 os.makedirs("save_result", exist_ok=True)
 
-def save_result(data, filename=RESULT_FILE):
+def save_result(data, filename=RESULT_FILE):#Secruity Note: This should be only modified to accept year_month parameter not by any other api.
     with open(filename, 'w') as f:
         json.dump(data, f)
 
