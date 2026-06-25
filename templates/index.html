@@ -650,6 +650,10 @@
             ? `<span class="type-badge">${escapeHtml(type)}</span>`
             : `<span class="type-badge empty" style="cursor:pointer;" onclick="quickAddMapping('${escapeHtml(item.sellerName)}')">+ Add Type</span>`;
 
+          const detailsHtml = item.carrierName === 'Manual'
+            ? `<a class="btn-danger" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; color: white; display: inline-block; cursor: pointer; text-decoration: none;" onclick="deleteManualExpense('${escapeHtml(item.invoiceNumber)}')">Delete</a>`
+            : `<a onclick="postToken('${item.token}')">View Details</a>`;
+
           tr.innerHTML = `
             <td>${escapeHtml(item.invoiceNumber)}</td>
             <td>${formatDate(item.invoiceDate)}</td>
@@ -657,7 +661,7 @@
             <td>${escapeHtml(item.sellerName)}</td>
             <td>${typeBadge}</td>
             <td>$${item.totalAmount}</td>
-            <td><a onclick="postToken('${item.token}')">View Details</a></td>
+            <td>${detailsHtml}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -774,6 +778,37 @@
       } catch (e) {
         console.error(e);
         alert("Failed to save manual expense");
+      }
+    }
+
+    async function deleteManualExpense(invoiceNumber) {
+      if (!confirm(`Delete this manual expense?`)) return;
+      try {
+        const res = await fetch('/api/user_save_result', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoiceNumber })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+          const select = document.getElementById('monthSelect');
+          if (select.value) {
+            onMonthChange();
+          } else {
+            const resData = await fetch('/result');
+            const data = await resData.json();
+            if (data && data.content) {
+              currentInvoices = data.content;
+              document.getElementById('total').innerText = data.total || 0;
+              renderTable();
+            }
+          }
+        } else {
+          alert("Error deleting manual expense: " + (result.error || "Unknown error"));
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to delete manual expense");
       }
     }
 

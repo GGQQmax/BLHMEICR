@@ -260,62 +260,81 @@ def api_seller_types():
         else:
             return jsonify({"error": "Mapping not found"}), 404
 
-@app.route('/api/user_save_result', methods=['POST'])
+@app.route('/api/user_save_result', methods=['POST', 'DELETE'])
 def user_save_result():
-    data = request.get_json(silent=True) or {}
-    amount = data.get('amount')
-    type_ = data.get('type')
-    date_ = data.get('date')
-    seller_name = data.get('sellerName') or 'Manual Entry'
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or {}
+        amount = data.get('amount')
+        type_ = data.get('type')
+        date_ = data.get('date')
+        seller_name = data.get('sellerName') or 'Manual Entry'
 
-    if not amount:
-        return jsonify({"error": "Amount is required"}), 400
-    if not type_:
-        return jsonify({"error": "Type is required"}), 400
+        if not amount:
+            return jsonify({"error": "Amount is required"}), 400
+        if not type_:
+            return jsonify({"error": "Type is required"}), 400
 
-    try:
-        amount_val = int(amount)
-        if amount_val < 0:
-            return jsonify({"error": "Amount must be positive"}), 400
-    except ValueError:
-        return jsonify({"error": "Amount must be a number"}), 400
-
-    if not date_:
-        date_ = datetime.today().strftime('%Y-%m-%d')
-    else:
         try:
-            for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%Y-%m-%dT%H:%M:%S'):
-                try:
-                    parsed_dt = datetime.strptime(date_, fmt)
-                    date_ = parsed_dt.strftime('%Y-%m-%d')
-                    break
-                except ValueError:
-                    continue
-            else:
-                date_ = datetime.today().strftime('%Y-%m-%d')
-        except Exception:
+            amount_val = int(amount)
+            if amount_val < 0:
+                return jsonify({"error": "Amount must be positive"}), 400
+        except ValueError:
+            return jsonify({"error": "Amount must be a number"}), 400
+
+        if not date_:
             date_ = datetime.today().strftime('%Y-%m-%d')
+        else:
+            try:
+                for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%Y-%m-%dT%H:%M:%S'):
+                    try:
+                        parsed_dt = datetime.strptime(date_, fmt)
+                        date_ = parsed_dt.strftime('%Y-%m-%d')
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    date_ = datetime.today().strftime('%Y-%m-%d')
+            except Exception:
+                date_ = datetime.today().strftime('%Y-%m-%d')
 
-    import random
-    suffix = ''.join(random.choices('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=4))
-    invoice_number = f"MANUAL-{date_.replace('-', '')}-{suffix}"
+        import random
+        suffix = ''.join(random.choices('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=4))
+        invoice_number = f"MANUAL-{date_.replace('-', '')}-{suffix}"
 
-    new_invoice = {
-        "invoiceNumber": invoice_number,
-        "invoiceDate": date_,
-        "carrierName": "Manual",
-        "sellerName": seller_name,
-        "totalAmount": str(amount),
-        "token": "",
-        "type": type_
-    }
+        new_invoice = {
+            "invoiceNumber": invoice_number,
+            "invoiceDate": date_,
+            "carrierName": "Manual",
+            "sellerName": seller_name,
+            "totalAmount": str(amount),
+            "token": "",
+            "type": type_
+        }
 
-    manuals = load_manual_invoices()
-    manuals.append(new_invoice)
-    if save_manual_invoices(manuals):
-        return jsonify({"status": "success", "invoice": new_invoice})
-    else:
-        return jsonify({"error": "Failed to save manual invoice"}), 500
+        manuals = load_manual_invoices()
+        manuals.append(new_invoice)
+        if save_manual_invoices(manuals):
+            return jsonify({"status": "success", "invoice": new_invoice})
+        else:
+            return jsonify({"error": "Failed to save manual invoice"}), 500
+
+    elif request.method == 'DELETE':
+        data = request.get_json(silent=True) or {}
+        invoice_number = data.get('invoiceNumber')
+        if not invoice_number:
+            return jsonify({"error": "invoiceNumber is required"}), 400
+
+        manuals = load_manual_invoices()
+        initial_len = len(manuals)
+        manuals = [item for item in manuals if item.get('invoiceNumber') != invoice_number]
+
+        if len(manuals) < initial_len:
+            if save_manual_invoices(manuals):
+                return jsonify({"status": "success"})
+            else:
+                return jsonify({"error": "Failed to save manual invoices"}), 500
+        else:
+            return jsonify({"error": "Manual invoice not found"}), 404
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
