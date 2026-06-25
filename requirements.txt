@@ -1,5 +1,6 @@
 flask
 selenium
+fake-useragent
 requests
 dotenv
 torch
