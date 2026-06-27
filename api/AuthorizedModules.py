@@ -11,19 +11,51 @@ from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
 
 class EInvoiceAuthenticator:
-    def __init__(self, user:str, password:str):
-        self.__user = user
-        self.__password = password
+    def __init__(self, user: str, password: str):
+        """Initialize authenticator with credentials.
+
+        The credentials are typically provided via environment variables.
+        If either is missing, a clear exception is raised to avoid Selenium
+        attempting to send ``None`` to ``send_keys`` which results in a
+        ``TypeError``.
+        """
+        # Ensure environment variables are loaded (in case caller hasn't done so)
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+
+        # Fallback to environment variables if arguments are empty
+        self.__user = user or os.getenv("EINVOICE_USERNAME")
+        self.__password = password or os.getenv("EINVOICE_PASSWORD")
+
+        if not self.__user:
+            raise ValueError("EInvoice username is required (provide via argument or EINVOICE_USERNAME env var)")
+        if not self.__password:
+            raise ValueError("EInvoice password is required (provide via argument or EINVOICE_PASSWORD env var)")
+
         self.authToken = None
         self.session = None
         self.ua = UserAgent().random
-        pass
+        # No further action needed here
+
 
     def getAuthRequestsSession(self) -> requests.Session:
+        """Create a requests.Session that reuses Selenium cookies.
+
+        SSL verification is disabled to work around environments where the
+        target server presents an invalid certificate. This is not recommended
+        for production use but satisfies the user's request for a "no verify"
+        behaviour.
+        """
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
         selenium_cookies, token = self.pesAuth()
         requests_cookies = {cookie['name']: cookie['value'] for cookie in selenium_cookies}
         session = requests.Session()
         session.cookies.update(requests_cookies)
+        # Disable SSL verification for all requests made with this session
+        session.verify = False
         headers = {
                 'Authorization': f'Bearer {token}',
                 'Content-Type': 'application/json',
@@ -60,8 +92,10 @@ class EInvoiceAuthenticator:
             EC.visibility_of_element_located((By.ID, 'mobile_phone'))
         )
         # Enter username and password
-        element.send_keys(self.__user)
-        driver.find_element(By.ID, "password").send_keys(self.__password)
+        # ``self.__user`` and ``self.__password`` are guaranteed to be non‑None
+        # thanks to the validation performed in ``__init__``.
+        element.send_keys(str(self.__user))
+        driver.find_element(By.ID, "password").send_keys(str(self.__password))
 
         while(True):
         # Screenshot captcha image element
